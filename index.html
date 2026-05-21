@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>El Barrio · Invoices</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0d1f2d;
+      --ink-2: #3a5a72;
+      --ink-3: #7a9bb0;
+      --paper: #f0f7fc;
+      --surface: #ffffff;
+      --surface-2: #e8f4fb;
+      --sky: #2196C4;
+      --sky-light: #dff0f8;
+      --sky-dark: #1070a0;
+      --red: #c0392b;
+      --red-light: #fdecea;
+      --green: #2e7d52;
+      --green-light: #e8f5ee;
+      --amber: #b7600a;
+      --amber-light: #fef3e2;
+      --border: rgba(0,0,0,0.08);
+      --border-strong: rgba(0,0,0,0.15);
+      --radius: 14px;
+      --radius-sm: 9px;
+      --shadow: 0 2px 16px rgba(33,150,196,0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ink: #e8f4fb;
+        --ink-2: #7ab0cc;
+        --ink-3: #4a7a96;
+        --paper: #0a1520;
+        --surface: #0f2030;
+        --surface-2: #142535;
+        --border: rgba(255,255,255,0.08);
+        --border-strong: rgba(255,255,255,0.14);
+        --sky-light: #0a2535;
+        --red-light: #2a1010;
+        --green-light: #0e2018;
+        --amber-light: #1a1200;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    .app { max-width: 500px; margin: 0 auto; padding-bottom: 3rem; }
+
+    .header { text-align: center; padding: 1.75rem 0 1.5rem; }
+    .header-logo { font-size: 26px; font-weight: 700; color: var(--ink); letter-spacing: -0.5px; }
+    .header-logo span { color: var(--sky); }
+    .header-sub { font-size: 12px; color: var(--ink-3); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
+
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 0.875rem;
+      box-shadow: var(--shadow);
+    }
+
+    .section-label {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--ink-3); margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 0.5px; background: var(--border); }
+
+    .field { margin-bottom: 1rem; }
+    .field:last-child { margin-bottom: 0; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    label.lbl {
+      display: block; font-size: 11px; font-weight: 600;
+      color: var(--ink-3); text-transform: uppercase;
+      letter-spacing: 0.07em; margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="date"], select, textarea {
+      width: 100%; background: var(--surface-2);
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 10px 13px; font-size: 14px;
+      color: var(--ink); font-family: inherit;
+      outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+      appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--sky);
+      box-shadow: 0 0 0 3px rgba(33,150,196,0.12);
+      background: var(--surface);
+    }
+    textarea { resize: vertical; min-height: 68px; line-height: 1.5; }
+    input[type="date"] { color-scheme: light dark; }
+    input.error { border-color: var(--red) !important; box-shadow: 0 0 0 3px rgba(192,57,43,0.12) !important; }
+
+    /* Upload */
+    .upload-zone {
+      border: 1.5px dashed var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 2rem 1rem; text-align: center;
+      cursor: pointer; transition: all 0.15s;
+      background: var(--surface-2); position: relative;
+    }
+    .upload-zone:hover { border-color: var(--sky); background: var(--sky-light); }
+    .upload-zone.dragover { border-color: var(--sky); background: var(--sky-light); transform: scale(1.01); }
+    .upload-zone i { font-size: 32px; color: var(--ink-3); display: block; margin-bottom: 8px; }
+    .upload-zone p { font-size: 14px; color: var(--ink-2); font-weight: 500; }
+    .upload-zone small { font-size: 11px; color: var(--ink-3); }
+    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+    .preview-wrap { display: none; position: relative; border-radius: var(--radius-sm); overflow: hidden; border: 0.5px solid var(--border-strong); }
+    .preview-wrap img { width: 100%; display: block; max-height: 300px; object-fit: contain; background: var(--surface-2); }
+
+    .preview-pdf { display: none; background: var(--surface-2); padding: 1.5rem; text-align: center; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong); }
+    .preview-pdf i { font-size: 36px; color: var(--sky); display: block; margin-bottom: 8px; }
+    .preview-pdf p { font-size: 13px; color: var(--ink-2); font-weight: 500; }
+    .preview-pdf small { font-size: 11px; color: var(--ink-3); }
+
+    .btn-remove {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(0,0,0,0.6); color: #fff;
+      border: none; border-radius: 50%;
+      width: 30px; height: 30px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .btn-remove-pdf {
+      display: inline-flex; align-items: center; gap: 5px;
+      margin-top: 10px; padding: 6px 14px;
+      background: var(--red); color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 12px; font-family: inherit; cursor: pointer;
+    }
+
+    /* Analyzing overlay */
+    .analyzing-bar {
+      display: none; align-items: center; gap: 10px;
+      padding: 10px 14px; background: var(--sky-light);
+      border: 0.5px solid var(--sky); border-radius: var(--radius-sm);
+      font-size: 13px; color: var(--sky-dark); font-weight: 500;
+      margin-bottom: 1rem;
+    }
+    .analyzing-bar.show { display: flex; }
+
+    .divider { height: 0.5px; background: var(--border); margin: 1rem 0; }
+
+    .ai-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .ai-label {
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--ink-3);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px;
+    }
+    .status-pending { background: var(--amber-light); color: var(--amber); }
+    .status-ok { background: var(--green-light); color: var(--green); }
+    .status-error { background: var(--red-light); color: var(--red); }
+
+    .ai-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+    .ai-field label { font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.07em; display: block; margin-bottom: 5px; }
+    .ai-field.full { grid-column: 1 / -1; }
+    .ai-field input, .ai-field select {
+      background: var(--surface-2); border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius-sm); padding: 9px 12px; font-size: 13px;
+      width: 100%; color: var(--ink); font-family: inherit; outline: none;
+      transition: border-color 0.15s; appearance: none;
+    }
+    .ai-field input:focus, .ai-field select:focus { border-color: var(--sky); background: var(--surface); }
+    .ai-field input.filled { border-color: #a8d5b8; background: var(--green-light); }
+    .ai-field input.required-empty { border-color: var(--red); background: var(--red-light); }
+
+    .field-hint { font-size: 11px; color: var(--red); margin-top: 4px; display: none; }
+    .field-hint.show { display: block; }
+
+    .estado-display {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 13px; border-radius: var(--radius-sm);
+      border: 0.5px solid var(--border-strong);
+      font-size: 13px; font-weight: 500;
+      background: var(--surface-2); min-height: 42px;
+    }
+    .estado-display.chequeado { background: var(--green-light); border-color: #a8d5b8; color: var(--green); }
+    .estado-display.revisar { background: var(--amber-light); border-color: #f0c070; color: var(--amber); }
+    .estado-display.no-chequeado { background: var(--surface-2); color: var(--ink-3); }
+
+    /* Buttons */
+    .btn-reanalyze {
+      width: 100%; padding: 10px;
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface-2); color: var(--ink-2);
+      font-size: 13px; font-weight: 500; font-family: inherit;
+      cursor: pointer; display: none; align-items: center; justify-content: center; gap: 7px;
+      transition: all 0.15s; margin-top: 4px;
+    }
+    .btn-reanalyze.show { display: flex; }
+    .btn-reanalyze:hover { background: var(--sky-light); border-color: var(--sky); color: var(--sky-dark); }
+
+    .btn-submit {
+      width: 100%; padding: 15px;
+      border: none; border-radius: var(--radius);
+      background: var(--sky); color: #fff;
+      font-size: 15px; font-weight: 600; font-family: inherit;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity 0.15s, transform 0.1s;
+      box-shadow: 0 4px 16px rgba(33,150,196,0.35);
+    }
+    .btn-submit:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+    .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .spinner-dark { border-color: rgba(0,0,0,0.1); border-top-color: var(--sky); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Dates row */
+    .dates-row {
+      display: flex; gap: 8px; align-items: center;
+      padding: 10px 13px; background: var(--surface-2);
+      border-radius: var(--radius-sm); border: 0.5px solid var(--border);
+      font-size: 12px; color: var(--ink-3); margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .dates-row span { display: flex; align-items: center; gap: 4px; }
+    .dates-row strong { color: var(--ink-2); }
+
+    /* Success */
+    .success-view {
+      display: none; background: var(--surface);
+      border: 0.5px solid var(--border); border-radius: var(--radius);
+      padding: 2.5rem 1.5rem; text-align: center; box-shadow: var(--shadow);
+      margin-bottom: 1rem;
+    }
+    .success-icon { width: 60px; height: 60px; background: var(--green-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+    .success-icon i { font-size: 28px; color: var(--green); }
+    .success-view h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .success-view p { font-size: 13px; color: var(--ink-2); }
+    .success-detail { background: var(--surface-2); border-radius: var(--radius-sm); padding: 12px 16px; margin: 1rem 0; font-size: 13px; color: var(--ink-2); text-align: left; line-height: 1.8; }
+    .success-detail strong { color: var(--ink); display: block; font-size: 14px; margin-bottom: 2px; }
+    .btn-new { display: inline-flex; align-items: center; gap: 6px; padding: 11px 22px; border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm); background: transparent; color: var(--ink); font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.15s; margin-top: 0.5rem; }
+    .btn-new:hover { background: var(--surface-2); }
+
+    /* Records */
+    .rec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .rec-header span { font-size: 15px; font-weight: 700; }
+    .rec-count { font-size: 12px; color: var(--ink-3); background: var(--surface-2); padding: 3px 10px; border-radius: 20px; }
+    .rec-item { border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 11px 13px; margin-bottom: 8px; }
+    .rec-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .rec-empresa { font-size: 13px; font-weight: 600; }
+    .rec-num { font-size: 11px; color: var(--sky-dark); font-weight: 500; background: var(--sky-light); padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+    .rec-meta { font-size: 12px; color: var(--ink-3); margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .rec-estado { font-size: 11px; padding: 1px 7px; border-radius: 4px; }
+    .rec-estado.chequeado { background: var(--green-light); color: var(--green); }
+    .rec-estado.revisar { background: var(--amber-light); color: var(--amber); }
+    .rec-estado.no-chequeado { background: var(--surface-2); color: var(--ink-3); }
+
+    .btn-dl { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; padding: 11px; border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm); background: transparent; color: var(--ink-2); font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; margin-top: 10px; transition: background 0.15s; }
+    .btn-dl:hover { background: var(--surface-2); }
+
+    /* Config */
+    .config-bar { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
+    .btn-config { display: flex; align-items: center; gap: 5px; padding: 6px 11px; border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm); background: transparent; color: var(--ink-3); font-size: 12px; font-family: inherit; cursor: pointer; transition: background 0.15s; }
+    .btn-config:hover { background: var(--surface); color: var(--ink-2); }
+    .config-panel { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 0.875rem; display: none; box-shadow: var(--shadow); }
+    .config-panel p { font-size: 12px; color: var(--ink-2); margin-bottom: 10px; line-height: 1.6; }
+    .btn-save-config { margin-top: 8px; padding: 8px 16px; border: none; border-radius: var(--radius-sm); background: var(--sky); color: #fff; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-logo">El <span>Barrio</span></div>
+    <div class="header-sub">Invoice Registration · רישום חשבוניות</div>
+  </div>
+
+  <div class="config-bar">
+    <button class="btn-config" onclick="toggleConfig()">
+      <i class="ti ti-settings"></i> Google Sheets
+    </button>
+  </div>
+
+  <div class="config-panel" id="config-panel">
+    <p>Paste your Google Apps Script URL to automatically send records to Google Sheets.</p>
+    <div class="field">
+      <label class="lbl" for="sheets-url">Apps Script URL</label>
+      <input type="text" id="sheets-url" placeholder="https://script.google.com/macros/s/..." />
+    </div>
+    <button class="btn-save-config" onclick="saveConfig()">Save</button>
+  </div>
+
+  <!-- FORM -->
+  <div id="form-view">
+
+    <!-- Employee -->
+    <div class="card">
+      <div class="section-label"><i class="ti ti-user" style="font-size:13px"></i> Employee Info</div>
+
+      <div class="field">
+        <label class="lbl" for="empleado">Your Name</label>
+        <input id="empleado" type="text" placeholder="Full name" />
+      </div>
+
+      <div class="field-row">
+        <div class="field" style="margin-bottom:0">
+          <label class="lbl" for="lugar">Location</label>
+          <select id="lugar">
+            <option value="">Select</option>
+            <option value="TLV">TLV</option>
+            <option value="RG">RG</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label class="lbl" for="fecha-entrega">Delivery Date</label>
+          <input id="fecha-entrega" type="date" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="card">
+      <div class="section-label"><i class="ti ti-tag" style="font-size:13px"></i> Description</div>
+      <div class="field" style="margin-bottom:0">
+        <label class="lbl" for="descripcion">What was delivered?</label>
+        <textarea id="descripcion" placeholder="e.g. Meat, French fries, Vegetables, Beer..."></textarea>
+      </div>
+    </div>
+
+    <!-- Upload -->
+    <div class="card">
+      <div class="section-label"><i class="ti ti-camera" style="font-size:13px"></i> Invoice · חשבונית</div>
+
+      <div class="upload-zone" id="upload-zone"
+           ondragover="handleDragOver(event)"
+           ondragleave="handleDragLeave(event)"
+           ondrop="handleDrop(event)">
+        <i class="ti ti-cloud-upload"></i>
+        <p>Take a photo or upload file</p>
+        <small>JPG · PNG · PDF — up to 20MB</small>
+        <input type="file" id="file-input" accept="image/*,application/pdf" capture="environment" onchange="handleFile(this.files[0])">
+      </div>
+
+      <div class="preview-wrap" id="preview-img-wrap">
+        <img id="preview-img" src="" alt="Preview" />
+        <button class="btn-remove" onclick="removeFile()"><i class="ti ti-x"></i></button>
+      </div>
+
+      <div class="preview-pdf" id="preview-pdf-wrap">
+        <i class="ti ti-file-type-pdf"></i>
+        <p id="pdf-name">file.pdf</p>
+        <small>PDF ready to analyze</small><br>
+        <button class="btn-remove-pdf" onclick="removeFile()"><i class="ti ti-x"></i> Remove</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Dates info -->
+      <div class="dates-row" id="dates-row" style="display:none">
+        <span><i class="ti ti-calendar-upload" style="font-size:13px"></i> Uploaded: <strong id="fecha-subida-display">—</strong></span>
+        <input type="hidden" id="fecha-subida" />
+      </div>
+
+      <!-- Analyzing bar -->
+      <div class="analyzing-bar" id="analyzing-bar">
+        <div class="spinner spinner-dark"></div>
+        <span>Analyzing invoice with AI...</span>
+      </div>
+
+      <!-- AI results -->
+      <div id="ai-results" style="display:none">
+        <div class="ai-bar">
+          <span class="ai-label"><i class="ti ti-sparkles" style="font-size:12px"></i> Extracted by AI</span>
+          <span id="ai-tag" class="status-badge status-pending">pending</span>
+        </div>
+
+        <div class="ai-grid">
+          <div class="ai-field full">
+            <label for="empresa">Company / ספק</label>
+            <input id="empresa" type="text" placeholder="—" />
+          </div>
+          <div class="ai-field full">
+            <label for="num-factura">Invoice No. / מספר חשבונית</label>
+            <input id="num-factura" type="text" placeholder="—" />
+          </div>
+          <div class="ai-field full">
+            <label for="cuenta">Account</label>
+            <select id="cuenta">
+              <option value="PROVEEDORES">PROVEEDORES</option>
+              <option value="COMIDA">COMIDA</option>
+              <option value="SERVICIOS">SERVICIOS</option>
+              <option value="PERSONAL">PERSONAL</option>
+              <option value="MANTENIMIENTO">MANTENIMIENTO</option>
+              <option value="MUEBLES Y ÚTILES">MUEBLES Y ÚTILES</option>
+              <option value="OTROS">OTROS</option>
+            </select>
+          </div>
+          <div class="ai-field full">
+            <label for="sin-iva">Subtotal (excl. VAT) / לפני מע"מ <span style="color:var(--red)">*</span></label>
+            <input id="sin-iva" type="text" placeholder="—" />
+            <div class="field-hint" id="hint-sin-iva">Required — please enter manually</div>
+          </div>
+          <div class="ai-field">
+            <label for="iva">VAT / מע"מ</label>
+            <input id="iva" type="text" placeholder="—" />
+          </div>
+          <div class="ai-field">
+            <label for="total">Total <span style="color:var(--red)">*</span></label>
+            <input id="total" type="text" placeholder="—" />
+            <div class="field-hint" id="hint-total">Required — please enter manually</div>
+          </div>
+          <div class="ai-field full">
+            <label>Status</label>
+            <div class="estado-display no-chequeado" id="estado-display">
+              <i class="ti ti-clock" style="font-size:15px"></i>
+              <span>Not analyzed</span>
+            </div>
+            <input type="hidden" id="estado" value="NOT CHECKED" />
+          </div>
+        </div>
+
+        <button class="btn-reanalyze" id="btn-reanalyze" onclick="analyzeFile()">
+          <i class="ti ti-refresh"></i> Re-analyze
+        </button>
+      </div>
+    </div>
+
+    <!-- Comment -->
+    <div class="card">
+      <div class="section-label"><i class="ti ti-message" style="font-size:13px"></i> Comment</div>
+      <textarea id="comentario" placeholder="Any notes about the delivery, product condition, etc."></textarea>
+    </div>
+
+    <button class="btn-submit" id="btn-submit" onclick="submitForm()">
+      <i class="ti ti-cloud-upload"></i> Save Record
+    </button>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-view" id="success-view">
+    <div class="success-icon"><i class="ti ti-check"></i></div>
+    <h2>Record Saved!</h2>
+    <p>The invoice was registered successfully.</p>
+    <div class="success-detail" id="success-detail"></div>
+    <button class="btn-new" onclick="resetForm()">
+      <i class="ti ti-plus"></i> Register Another Invoice
+    </button>
+  </div>
+
+  <!-- RECORDS -->
+  <div class="card" id="records-section" style="display:none; margin-top:1rem;">
+    <div class="rec-header">
+      <span>Today's Records</span>
+      <span class="rec-count" id="rec-count">0 invoices</span>
+    </div>
+    <div id="records-list"></div>
+    <button class="btn-dl" onclick="downloadCSV()">
+      <i class="ti ti-file-spreadsheet"></i> Download CSV for Excel
+    </button>
+  </div>
+
+</div>
+
+<script>
+  let currentFile = null;
+  let currentFileType = null;
+  let currentBase64 = null;
+  let records = [];
+  let sheetsURL = localStorage.getItem('barRio_sheetsURL') || '';
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('fecha-entrega').value = today;
+  if (sheetsURL) document.getElementById('sheets-url').value = sheetsURL;
+
+  // Config
+  function toggleConfig() {
+    const p = document.getElementById('config-panel');
+    p.style.display = p.style.display === 'block' ? 'none' : 'block';
+  }
+  function saveConfig() {
+    sheetsURL = document.getElementById('sheets-url').value.trim();
+    localStorage.setItem('barRio_sheetsURL', sheetsURL);
+    document.getElementById('config-panel').style.display = 'none';
+    alert('✓ URL saved');
+  }
+
+  // Drag & drop
+  function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
+  function handleDragLeave() { document.getElementById('upload-zone').classList.remove('dragover'); }
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('upload-zone').classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  }
+
+  // File handling — auto-analyze on upload
+  function handleFile(file) {
+    if (!file) return;
+    currentFile = file;
+
+    const now = new Date();
+    const ts = now.toLocaleString('en-IL');
+    document.getElementById('fecha-subida').value = ts;
+    document.getElementById('fecha-subida-display').textContent = ts;
+    document.getElementById('dates-row').style.display = 'flex';
+
+    const isPDF = file.type === 'application/pdf';
+    currentFileType = isPDF ? 'pdf' : 'image';
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      currentBase64 = e.target.result;
+
+      document.getElementById('upload-zone').style.display = 'none';
+      if (isPDF) {
+        document.getElementById('preview-img-wrap').style.display = 'none';
+        document.getElementById('preview-pdf-wrap').style.display = 'block';
+        document.getElementById('pdf-name').textContent = file.name;
+      } else {
+        document.getElementById('preview-pdf-wrap').style.display = 'none';
+        document.getElementById('preview-img-wrap').style.display = 'block';
+        document.getElementById('preview-img').src = currentBase64;
+      }
+
+      // Auto-analyze immediately
+      analyzeFile();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeFile() {
+    currentFile = null; currentBase64 = null; currentFileType = null;
+    document.getElementById('file-input').value = '';
+    document.getElementById('upload-zone').style.display = 'block';
+    document.getElementById('preview-img-wrap').style.display = 'none';
+    document.getElementById('preview-pdf-wrap').style.display = 'none';
+    document.getElementById('ai-results').style.display = 'none';
+    document.getElementById('analyzing-bar').classList.remove('show');
+    document.getElementById('dates-row').style.display = 'none';
+    document.getElementById('fecha-subida').value = '';
+    document.getElementById('btn-reanalyze').classList.remove('show');
+    resetAIFields();
+  }
+
+  function resetAIFields() {
+    ['empresa','num-factura','sin-iva','iva','total'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.value = ''; el.placeholder = '—'; el.classList.remove('filled','required-empty'); }
+    });
+    ['hint-sin-iva','hint-total'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('show');
+    });
+    setEstado('NOT CHECKED');
+    const tag = document.getElementById('ai-tag');
+    if (tag) { tag.textContent = 'pending'; tag.className = 'status-badge status-pending'; }
+  }
+
+  function setEstado(estado) {
+    const display = document.getElementById('estado-display');
+    document.getElementById('estado').value = estado;
+    display.className = 'estado-display';
+    if (estado === 'CHECKED') {
+      display.classList.add('chequeado');
+      display.innerHTML = '<i class="ti ti-circle-check" style="font-size:15px"></i><span>Checked — data is consistent</span>';
+    } else if (estado === 'REVIEW') {
+      display.classList.add('revisar');
+      display.innerHTML = '<i class="ti ti-alert-triangle" style="font-size:15px"></i><span>Review — possible discrepancy</span>';
+    } else {
+      display.classList.add('no-chequeado');
+      display.innerHTML = '<i class="ti ti-clock" style="font-size:15px"></i><span>Not analyzed</span>';
+    }
+  }
+
+  // AI Analysis
+  async function analyzeFile() {
+    if (!currentBase64) return;
+
+    document.getElementById('analyzing-bar').classList.add('show');
+    document.getElementById('ai-results').style.display = 'none';
+    document.getElementById('btn-reanalyze').classList.remove('show');
+
+    try {
+      const base64Data = currentBase64.split(',')[1];
+      const mediaType = currentFileType === 'pdf' ? 'application/pdf' : (currentFile.type || 'image/jpeg');
+
+      const contentBlock = currentFileType === 'pdf'
+        ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64Data } }
+        : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } };
+
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: [
+              contentBlock,
+              {
+                type: "text",
+                text: `Analyze this document. It may be an Israeli חשבונית (invoice/receipt) written in Hebrew, English, or both.
+
+Respond ONLY with pure JSON, no markdown, no backticks:
+
+{
+  "image_quality": "ok or blurry",
+  "empresa": "company or supplier name as it appears (Hebrew or English)",
+  "num_factura": "invoice or document number",
+  "sin_iva": "amount before VAT with currency symbol (₪ or $)",
+  "iva": "VAT amount with currency symbol",
+  "total": "total amount including VAT with currency symbol",
+  "estado": "CHECKED or REVIEW",
+  "motivo": "if REVIEW briefly explain why, otherwise leave empty"
+}
+
+Rules:
+- image_quality: mark as "blurry" if the document is too blurry or dark to read reliably
+- CHECKED: company readable, invoice number present, amounts consistent (subtotal + VAT ≈ total), Israel VAT = 18%
+- REVIEW: any key data unreadable, amounts don't add up, missing critical info, or VAT rate doesn't match
+- If a value cannot be read, use "Not readable"`
+              }
+            ]
+          }]
+        })
+      });
+
+      const data = await res.json();
+      const text = data.content.map(i => i.text || '').join('');
+      const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+
+      document.getElementById('analyzing-bar').classList.remove('show');
+
+      // Check image quality
+      if (parsed.image_quality === 'blurry') {
+        document.getElementById('ai-results').style.display = 'none';
+        showBlurryError();
+        return;
+      }
+
+      document.getElementById('ai-results').style.display = 'block';
+
+      const fieldMap = {
+        'empresa': parsed.empresa,
+        'num-factura': parsed.num_factura,
+        'sin-iva': parsed.sin_iva,
+        'iva': parsed.iva,
+        'total': parsed.total
+      };
+
+      Object.entries(fieldMap).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const isReadable = val && val !== 'Not readable' && val.trim() !== '';
+        el.value = isReadable ? val : '';
+        el.placeholder = isReadable ? '' : 'Not readable — enter manually';
+        el.classList.toggle('filled', isReadable);
+      });
+
+      const estado = parsed.estado === 'CHECKED' ? 'CHECKED' : 'REVIEW';
+      setEstado(estado);
+
+      if (parsed.motivo) {
+        document.getElementById('comentario').placeholder = `AI note: ${parsed.motivo}`;
+      }
+
+      document.getElementById('ai-tag').textContent = estado === 'CHECKED' ? 'extracted ✓' : 'review ⚠';
+      document.getElementById('ai-tag').className = `status-badge ${estado === 'CHECKED' ? 'status-ok' : 'status-pending'}`;
+      document.getElementById('btn-reanalyze').classList.add('show');
+
+    } catch(e) {
+      console.error(e);
+      document.getElementById('analyzing-bar').classList.remove('show');
+      document.getElementById('ai-results').style.display = 'block';
+      document.getElementById('ai-tag').textContent = 'error · enter manually';
+      document.getElementById('ai-tag').className = 'status-badge status-error';
+      setEstado('REVIEW');
+      document.getElementById('btn-reanalyze').classList.add('show');
+    }
+  }
+
+  function showBlurryError() {
+    // Replace preview with error message
+    const zone = document.getElementById('upload-zone');
+    zone.style.display = 'block';
+    zone.style.borderColor = 'var(--red)';
+    zone.style.background = 'var(--red-light)';
+    zone.innerHTML = `
+      <i class="ti ti-camera-off" style="color:var(--red)"></i>
+      <p style="color:var(--red);font-weight:600">Photo is too blurry</p>
+      <small style="color:var(--red)">Please take a clearer photo and try again</small>
+      <input type="file" id="file-input" accept="image/*,application/pdf" capture="environment" onchange="handleFile(this.files[0])" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+    `;
+    document.getElementById('preview-img-wrap').style.display = 'none';
+    document.getElementById('preview-pdf-wrap').style.display = 'none';
+    currentFile = null; currentBase64 = null; currentFileType = null;
+  }
+
+  // Submit
+  async function submitForm() {
+    const empleado = document.getElementById('empleado').value.trim();
+    const lugar = document.getElementById('lugar').value;
+    const fechaEntrega = document.getElementById('fecha-entrega').value;
+    const cuenta = document.getElementById('cuenta').value;
+    const sinIva = document.getElementById('sin-iva').value.trim();
+    const total = document.getElementById('total').value.trim();
+
+    // Basic validation
+    if (!empleado || !lugar || !fechaEntrega) {
+      alert('Please fill in: Name, Location and Delivery Date.');
+      return;
+    }
+
+    // AI results shown but required fields empty
+    const aiVisible = document.getElementById('ai-results').style.display !== 'none';
+    let hasError = false;
+
+    if (aiVisible) {
+      if (!sinIva) {
+        document.getElementById('sin-iva').classList.add('required-empty');
+        document.getElementById('hint-sin-iva').classList.add('show');
+        hasError = true;
+      } else {
+        document.getElementById('sin-iva').classList.remove('required-empty');
+        document.getElementById('hint-sin-iva').classList.remove('show');
+      }
+      if (!total) {
+        document.getElementById('total').classList.add('required-empty');
+        document.getElementById('hint-total').classList.add('show');
+        hasError = true;
+      } else {
+        document.getElementById('total').classList.remove('required-empty');
+        document.getElementById('hint-total').classList.remove('show');
+      }
+      if (hasError) {
+        document.getElementById('sin-iva').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    }
+
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Saving...';
+
+    const r = {
+      FECHA_ENTREGA: fechaEntrega,
+      FECHA_SUBIDA: document.getElementById('fecha-subida').value || new Date().toLocaleString('en-IL'),
+      LUGAR: lugar,
+      EMPLEADO: empleado,
+      'NUM FACTURA': document.getElementById('num-factura').value || '—',
+      DESCRIPCION: document.getElementById('descripcion').value.trim() || '—',
+      EMPRESA: document.getElementById('empresa').value.trim() || '—',
+      CUENTA: cuenta,
+      'SIN IVA': sinIva || '—',
+      IVA: document.getElementById('iva').value || '—',
+      TOTAL: total || '—',
+      ESTADO: document.getElementById('estado').value,
+      COMENTARIO: document.getElementById('comentario').value.trim() || '—',
+    };
+
+    if (sheetsURL) {
+      try {
+        await fetch(sheetsURL, {
+          method: 'POST', mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(r)
+        });
+      } catch(e) { console.warn('Sheets error:', e); }
+    }
+
+    records.push(r);
+    document.getElementById('form-view').style.display = 'none';
+    document.getElementById('success-view').style.display = 'block';
+    document.getElementById('success-detail').innerHTML = `
+      <strong>${r.EMPRESA} · #${r['NUM FACTURA']}</strong>
+      ${r.DESCRIPCION}<br>
+      Account: ${r.CUENTA} · Total: ${r.TOTAL}<br>
+      Delivery: ${r.FECHA_ENTREGA} · Uploaded: ${r.FECHA_SUBIDA}<br>
+      Employee: ${r.EMPLEADO} · ${r.LUGAR}
+    `;
+
+    renderRecords();
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-cloud-upload"></i> Save Record';
+  }
+
+  function resetForm() {
+    document.getElementById('success-view').style.display = 'none';
+    document.getElementById('form-view').style.display = 'block';
+    document.getElementById('empleado').value = '';
+    document.getElementById('lugar').value = '';
+    document.getElementById('fecha-entrega').value = today;
+    document.getElementById('descripcion').value = '';
+    document.getElementById('comentario').value = '';
+    document.getElementById('comentario').placeholder = 'Any notes about the delivery, product condition, etc.';
+
+    // Reset upload zone in case blurry error changed it
+    const zone = document.getElementById('upload-zone');
+    zone.style.borderColor = ''; zone.style.background = '';
+    zone.innerHTML = `
+      <i class="ti ti-cloud-upload"></i>
+      <p>Take a photo or upload file</p>
+      <small>JPG · PNG · PDF — up to 20MB</small>
+      <input type="file" id="file-input" accept="image/*,application/pdf" capture="environment" onchange="handleFile(this.files[0])" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+    `;
+    removeFile();
+  }
+
+  function renderRecords() {
+    document.getElementById('records-section').style.display = 'block';
+    document.getElementById('rec-count').textContent = `${records.length} invoice${records.length !== 1 ? 's' : ''}`;
+    document.getElementById('records-list').innerHTML = [...records].reverse().map(r => {
+      const ec = r.ESTADO === 'CHECKED' ? 'chequeado' : r.ESTADO === 'REVIEW' ? 'revisar' : 'no-chequeado';
+      const el = r.ESTADO === 'CHECKED' ? '✓ Checked' : r.ESTADO === 'REVIEW' ? '⚠ Review' : '· Not analyzed';
+      return `
+        <div class="rec-item">
+          <div class="rec-top">
+            <span class="rec-empresa">${r.EMPRESA}</span>
+            <span class="rec-num">#${r['NUM FACTURA']}</span>
+          </div>
+          <div class="rec-meta">
+            <span>${r.EMPLEADO}</span>·
+            <span>${r.CUENTA}</span>·
+            <span><strong>${r.TOTAL}</strong></span>·
+            <span class="rec-estado ${ec}">${el}</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function downloadCSV() {
+    const headers = ['DELIVERY DATE','UPLOAD DATE','LOCATION','EMPLOYEE','INVOICE NO','DESCRIPTION','COMPANY','ACCOUNT','SUBTOTAL','VAT','TOTAL','STATUS','COMMENT'];
+    let csv = '\uFEFF' + headers.join(';') + '\n';
+    records.forEach(r => {
+      const row = [r.FECHA_ENTREGA, r.FECHA_SUBIDA, r.LUGAR, r.EMPLEADO, r['NUM FACTURA'], r.DESCRIPCION, r.EMPRESA, r.CUENTA, r['SIN IVA'], r.IVA, r.TOTAL, r.ESTADO, r.COMENTARIO];
+      csv += row.map(v => `"${(v||'').replace(/"/g,'""')}"`).join(';') + '\n';
+    });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    a.download = `elbarrio_invoices_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  }
+</script>
+</body>
+</html>
